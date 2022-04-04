@@ -6,3 +6,9 @@
     margin: 0.7vh;
     font-size: larger;
 }
+
+.BtnDelete{
+    background-color: brown;
+    color: azure;
+  
+}

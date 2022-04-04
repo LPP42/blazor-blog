@@ -1,7 +1,7 @@
 ﻿@page "/blog"
 @using Models
 @using Microsoft.EntityFrameworkCore
-@inject IDbContextFactory<BlogContext> CtxFactory;
+@inject IDbContextFactory<BlogContext> CtxFactory
 
 <PageTitle>Blog</PageTitle>
 
@@ -11,50 +11,72 @@
 <input type="text" placeholder="Content" @bind="content" />
 <button @onclick="AddEntryAsync">Add Entry</button>
 
+
 @foreach (var entry in blog)
 {
-    <article class="blog-entry">
-        <h4>@((MarkupString)entry.Title)</h4>
-        <h5>@entry.TimePosted</h5>
-        <div class="blog-entry-content">@((MarkupString)entry.Content)</div>
-    </article>
+	<article class="blog-entry" >
+		<h4>@entry.Title</h4>
+		<h5>@entry.TimePosted</h5>
+		<input type="hiddent" value="@entry.BlogEntryId">
+		<div class="blog-entry-content">@((MarkupString)entry.Content)</div>
+
+		<button @onclick="() =>DeleteAsync(entry)">Delete</button>
+	</article>
 }
-
 @code {
-    protected override async Task OnInitializedAsync()
-    {
-        using var ctx = await CtxFactory.CreateDbContextAsync();
 
-        if (ctx.Blog != null)
-        {
-            blog.AddRange(
-            await ctx.Blog.OrderByDescending(be => be.TimePosted).ToListAsync()
-            );
-        }
-    }
+	private List<BlogEntry> blog = new List<BlogEntry>();
 
-    private List<BlogEntry> blog = new List<BlogEntry>();
-    private string? title, content;
+	private string? title, content;
 
-    private async void AddEntryAsync()
-    {
-        if (!string.IsNullOrWhiteSpace(title) && !string.IsNullOrEmpty(content))
-        {
-            var be = new BlogEntry { Title = title, Content = content, TimePosted = DateTime.Now };
+	protected override async Task OnInitializedAsync()
+	{
+		await updateBlogEntriesAsync();
+	}
 
-            using var ctx = await CtxFactory.CreateDbContextAsync();
-            if (ctx.Blog != null)
-            {
-                await ctx.Blog.AddAsync(be);
-                if (await ctx.SaveChangesAsync() > 0)
-                {
-                    blog.Add(be);
+	public async Task updateBlogEntriesAsync()
+	{
+		blog.Clear();
+		using var ctx = await CtxFactory.CreateDbContextAsync();
 
-                    blog.Sort();
-                    title = "";
-                    content = string.Empty;
-                }
-            }
-        }
-    }
+		if (ctx.Blog != null)
+		{
+			blog.AddRange(
+			await ctx.Blog.OrderByDescending(be => be.TimePosted).ToListAsync()
+			);
+		}
+	}
+
+	private async void AddEntryAsync()
+	{
+		if (!string.IsNullOrWhiteSpace(title) && !string.IsNullOrWhiteSpace(content))
+		{
+			var be = new BlogEntry { Title = title, Content = content, TimePosted = DateTime.Now };
+
+
+			using var ctx = await CtxFactory.CreateDbContextAsync();
+			if (ctx.Blog != null)
+			{
+
+				await ctx.Blog.AddAsync(be);
+
+				if (await ctx.SaveChangesAsync() > 0)
+				{
+					await updateBlogEntriesAsync();
+					//blog.Add(be);
+
+					//blog.Sort();
+					title = "";
+					content = string.Empty;
+				}
+			}
+		}
+	}
+	private async void DeleteAsync(BlogEntry blogEntry)
+	{
+		using var ctx = await CtxFactory.CreateDbContextAsync();
+		ctx.Blog.Remove(blogEntry);
+		ctx.SaveChanges();
+		await updateBlogEntriesAsync();
+	}
 }
