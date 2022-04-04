@@ -1,0 +1,8 @@
+
+.blog-entry{
+    border: 0.5vh  rgb(35, 0, 87) solid;
+    background-color: rgb(154, 139, 173);
+    color: rgb(221, 29, 157);
+    margin: 0.7vh;
+    font-size: larger;
+}
